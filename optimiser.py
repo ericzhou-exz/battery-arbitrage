@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 import pyomo
+import matplotlib
 
 # Step 1: Load the Data
-data = pd.read_csv('nsw/concatenated_output.csv')
+data = pd.read_csv('qld/concatenated_output.csv')
 prices = data['RRP'].values
 
 # Step 2: Define Battery Parameters
@@ -13,29 +14,30 @@ max_discharge_rate = 1  # Maximum discharge rate in MW
 efficiency = 0.9  # Round-trip efficiency
 soc = 0.5
 
-total_charge_cost = 0
-total_discharge_revenue = 0
+sell = 200
+buy = 50
 
-charge_status = []
+for sell in [100, 200, 500, 1000, 2000, 5000, 10000]:
+    for buy in [0, 10, 20, 50, 100, 200, 500, 1000, 2000]:
+        for capacity in [1, 2, 4, 8, 16]:
+            total_charge_cost = 0
+            total_discharge_revenue = 0
+            charge_status = []
 
-sell = 5000
-buy = 30
+            for i, price in enumerate(prices):
+                if price > sell and soc > 0.1:
+                    total_discharge_revenue += price / 12
+                    soc -= (max_discharge_rate / capacity) / 12
+                    charge_status.append(1)
 
-for i, price in enumerate(prices):
-    if price > sell and soc > 0.1:
-        total_discharge_revenue += price / 12
-        soc -= (max_discharge_rate / capacity) / 12
-        charge_status.append(1)
-        print(f'{price} discharge {soc}')
-    elif price < buy and soc < 0.9:
-        total_charge_cost += price / 12
-        soc += (max_charge_rate / capacity) / 12
-        charge_status.append(-1)
-        #print(f'{price} charge')
-    else:
-        charge_status.append(0)
-        #print(f'{price} hold')
+                elif price < buy and soc < 0.9:
+                    total_charge_cost += price / 12
+                    soc += (max_charge_rate / capacity) / 12
+                    charge_status.append(-1)
 
-profit = total_discharge_revenue - total_charge_cost
-print(sell, buy, profit)
-print(prices.mean())
+                else:
+                    charge_status.append(0)
+
+            utilisation = np.count_nonzero(charge_status) / len(prices)
+            profit = total_discharge_revenue - total_charge_cost
+            print(profit, sell, buy, capacity, utilisation)
