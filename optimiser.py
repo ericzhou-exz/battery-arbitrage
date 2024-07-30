@@ -30,11 +30,6 @@ for folder, capacity, buy, sell in zip(folders, capacity_arr, buy_arr, sell_arr)
     soc_list = []
 
     for i, price in enumerate(prices):
-        #sell = np.quantile(prices[i:i+100], 0.75)
-        #buy = np.quantile(prices[i:i+100], 0.25)
-        #sell = sell_arr[i]
-        #buy = buy_arr[i]
-
         if price < buy and soc < 0.9:
             total_charge_cost += price / 12
             soc += (1 / duration) / 12
@@ -47,7 +42,6 @@ for folder, capacity, buy, sell in zip(folders, capacity_arr, buy_arr, sell_arr)
 
         else:
             battery_dispatch.append(0)
-        
         soc_list.append(soc)
 
     utilisation = np.count_nonzero(battery_dispatch) / len(prices)
@@ -57,8 +51,9 @@ for folder, capacity, buy, sell in zip(folders, capacity_arr, buy_arr, sell_arr)
     residual_demand = [a - b for a, b in zip(demand, battery_dispatch)]
 
     avg_demand = [0] * 288
-    avg_battery = [0] * 288
     avg_residual = [0] * 288
+    
+    avg_battery = [0] * 288
     avg_prices = [0] * 288
     avg_soc = [0] * 288
 
