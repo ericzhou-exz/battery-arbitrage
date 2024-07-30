@@ -4,27 +4,22 @@ import pyomo
 import matplotlib.pyplot as plt
 
 # Step 1: Load the Data
-folders = ['nsw', 'vic', 'qld', 'sa', 'tas']
+folders = ['nsw', 'qld', 'sa', 'tas', 'vic']
+capacity_arr = [282, 151, 188, 17, 284]
+buy_arr = [200, 50, 2000, 50, 20]
+sell_arr = [200, 200, 2000, 100, 100]
 
 # Step 2: Define Battery Parameters
-capacity = 1  # Battery capacity in MWh
-power_rating = 1  # Maximum charge rate in MW
-efficiency = 0.9  # Round-trip efficiency
+duration = 2  # Battery capacity in MWh
+#power_rating = 300  # Maximum charge rate in MW
 soc = 0.5
 
-sell = 2000
-buy = 200
-
-#sell_arr = pd.Series(prices).rolling(1000).quantile(0.9, interpolation='linear')
-#buy_arr =  pd.Series(prices).rolling(1000).quantile(0.1, interpolation='linear')
-#print(sell_arr)
 # cost is 14400 per 5 kW / 10 kWh
 
-#for sell in [100, 200, 500, 1000, 2000, 5000, 10000]:
-#    for buy in [0, 10, 20, 50, 100, 200, 500, 1000, 2000]:
-#for capacity in [1, 2, 4, 8, 16]:
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111)
 
-for folder in folders:
+for folder, capacity, buy, sell in zip(folders, capacity_arr, buy_arr, sell_arr):
     data = pd.read_csv(f'{folder}/concatenated_output.csv')
     prices = data['RRP'].values
     demand = data['TOTALDEMAND'].values
@@ -42,13 +37,13 @@ for folder in folders:
 
         if price < buy and soc < 0.9:
             total_charge_cost += price / 12
-            soc += (power_rating / capacity) / 12
-            battery_dispatch.append(-power_rating)
+            soc += (1 / duration) / 12
+            battery_dispatch.append(-capacity)
 
         elif price > sell and soc > 0.1:
             total_discharge_revenue += price / 12
-            soc -= (power_rating / capacity) / 12
-            battery_dispatch.append(power_rating)
+            soc -= (1 / duration) / 12
+            battery_dispatch.append(capacity)
 
         else:
             battery_dispatch.append(0)
@@ -60,10 +55,6 @@ for folder in folders:
     print(profit, sell, buy, capacity, utilisation)
 
     residual_demand = [a - b for a, b in zip(demand, battery_dispatch)]
-    #plt.plot(battery_dispatch)
-    #plt.plot(demand)
-    #plt.plot(residual_demand)
-    #plt.show()
 
     avg_demand = [0] * 288
     avg_battery = [0] * 288
@@ -74,17 +65,38 @@ for folder in folders:
     for i in range(288):
         for j in range(365):
             avg_demand[i] += demand[j*288 + i] / 365
-            avg_battery[i] += battery_dispatch[j*288 + i] / 365
             avg_residual[i] += residual_demand[j*288 + i] / 365
-            avg_prices[i] += prices[j*288 + i] / 365
-            avg_soc[i] += 1000 * soc_list[j*288 + i] / 365
 
-    plt.plot(avg_demand)
-    plt.plot(avg_battery)
-    plt.plot(avg_residual)
-    plt.plot(avg_prices)
-    plt.plot(avg_soc)
-    plt.ylabel('Demand (MW)')
-    plt.xlabel('Time of day')
-    plt.title(folder)
-    plt.show()
+            avg_battery[i] += (battery_dispatch[j*288 + i] / 365) / capacity
+            avg_prices[i] += prices[j*288 + i] / 365
+            avg_soc[i] += soc_list[j*288 + i] / 365
+
+    ax1.plot(avg_demand)
+    ax1.plot(avg_residual)
+    
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot(111)
+    ax2.plot(avg_prices)
+    ax2.set_ylabel('Price ($/MWh)')
+
+    ax3 = ax2.twinx()
+    ax3.plot(avg_battery, color = 'green')
+    ax3.plot(avg_soc, color = 'orange')
+
+    ax2.set_title(folder.upper())
+    ax2.set_xticks(range(0, 288, 36), range(0, 24, 3))
+    ax2.set_xlim([0, 288])
+    ax2.set_xlabel('Time of day')
+
+    fig2.legend(['Spot price', 'Battery discharge', 'State of charge'], bbox_to_anchor=(1,1))
+    fig2.tight_layout()
+    fig2.savefig(f'figs/{folder} prices and battery')
+
+ax1.set_ylabel('Demand (MW)')
+ax1.set_xlabel('Time of day')
+ax1.set_title("All states average demand")
+ax1.set_xticks(range(0, 288, 36), range(0, 24, 3))
+ax1.legend(sorted(folders*2), bbox_to_anchor=(1,1))
+ax1.set_xlim([0, 288])
+fig1.tight_layout()
+fig1.savefig(f'figs/all states demand')
