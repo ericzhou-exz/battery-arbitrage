@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import pyomo
 import matplotlib.pyplot as plt
 
 # Step 1: Load the Data
@@ -13,8 +12,6 @@ sell_arr = [200, 200, 2000, 100, 100]
 duration = 2  # Battery capacity in MWh
 #power_rating = 300  # Maximum charge rate in MW
 soc = 0.5
-
-# cost is 14400 per 5 kW / 10 kWh
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111)
@@ -91,7 +88,7 @@ ax1.set_ylabel('Demand (MW)')
 ax1.set_xlabel('Time of day')
 ax1.set_title("All states average demand")
 ax1.set_xticks(range(0, 288, 36), range(0, 24, 3))
-ax1.legend(sorted(folders*2), bbox_to_anchor=(1,1))
+ax1.legend(['nsw', 'nsw', 'qld', 'qld', 'sa', 'sa', 'tas', 'tas', 'vic', 'vic'], bbox_to_anchor=(1,1))
 ax1.set_xlim([0, 288])
 fig1.tight_layout()
 fig1.savefig(f'figs/all states demand')
