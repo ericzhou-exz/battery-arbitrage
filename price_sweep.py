@@ -35,11 +35,11 @@ for folder in folders:
     demand = data['TOTALDEMAND'].values
     
     clipped_prices = np.clip(prices, -50, 200)
-    plt.hist(clipped_prices, bins=20, density=True)
+    plt.hist(clipped_prices, bins=20)
     plt.title(f'{folder.upper()} price histogram')
     plt.xlabel('Price ($)')
     plt.ylabel('Percentage of intervals')
-    plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
+    plt.gca().yaxis.set_major_formatter(PercentFormatter(12*24*365))
     plt.tight_layout()
     plt.savefig(f'figs/{folder} price histogram')
     plt.clf()
