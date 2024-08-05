@@ -17,16 +17,16 @@ def run_battery(buy, sell):
     soc = 0.5
 
     for i, price in enumerate(prices):
-        if price < buy * 50 and soc < 0.9:
+        if price < buy and soc < 0.9:
             total_charge_cost += price / 12
             soc += (1 / duration) / 12
 
-        elif price > sell * 50 and soc > 0.1:
+        elif price > sell and soc > 0.1:
             total_discharge_revenue += price / 12
             soc -= (1 / duration) / 12
 
     profit = total_discharge_revenue - total_charge_cost
-    print(profit, sell, buy)
+    #print(profit, sell, buy)
     return profit
 
 for folder in folders:
@@ -68,9 +68,9 @@ for folder in folders:
     seaborn.heatmap(profit_results, xticklabels=np.round(sell_arr, 2), yticklabels=np.round(buy_arr, 2), cmap='vlag')
 
     # Add titles and labels
-    plt.title('Profit Heatmap')
-    plt.xlabel('Sell price')
-    plt.ylabel('Buy price')
+    plt.title(f'{folder.upper()} arbitrage profit')
+    plt.xlabel('Sell price ($)')
+    plt.ylabel('Buy price ($)')
 
     # Show the plot
     plt.tight_layout()
